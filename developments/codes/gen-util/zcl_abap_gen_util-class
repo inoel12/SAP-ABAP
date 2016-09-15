@@ -1,0 +1,479 @@
+class ZCL_ABAP_GEN_UTIL definition
+  public
+  create public .
+
+public section.
+
+  types:
+    t_bdcdata TYPE STANDARD TABLE OF bdcdata .
+  types:
+    t_string  TYPE STANDARD TABLE OF string .
+
+  constants I type CHAR1 value 'I'. "#EC NOTEXT
+  constants E type CHAR1 value 'E'. "#EC NOTEXT
+  constants EQ type CHAR2 value 'EQ'. "#EC NOTEXT
+  constants CP type CHAR2 value 'CP'. "#EC NOTEXT
+
+  class ZCL_ABAP_GEN_UTIL definition load .
+  class-methods ADD_2_RANGE
+    importing
+      value(IM_SIGN) type ANY default ZCL_ABAP_GEN_UTIL=>I
+      value(IM_OPTION) type ANY default ZCL_ABAP_GEN_UTIL=>EQ
+      value(IM_LOW) type ANY default SPACE
+      value(IM_HIGH) type ANY default SPACE
+    changing
+      value(CH_RANGE_TAB) type STANDARD TABLE .
+  class-methods ADD_BDC_SCREEN
+    importing
+      value(IM_1STSCREEN) type ANY default 'X'
+      value(IM_SCREEN) type ANY
+      value(IM_PROGRAM) type ANY
+    changing
+      !CH_BDC_TAB type T_BDCDATA .
+  class-methods ADD_BDC_VALUE
+    importing
+      value(IM_FIELD) type ANY
+      value(IM_VALUE) type ANY default SPACE
+    changing
+      value(CH_BDC_TAB) type T_BDCDATA .
+  class-methods CHANGE_2_USER_DATE_FORMAT
+    importing
+      value(IM_IN_DATE) type ANY default SY-DATUM
+      value(IM_USER) type SY-UNAME default SY-UNAME
+    changing
+      value(CH_USER_DATE) type ANY .
+  class-methods COMP_DATE
+    importing
+      value(IM_INPUT1) type ANY
+      value(IM_INPUT2) type ANY
+      value(IM_INPUT3) type ANY
+      value(IM_SEPARATOR) type CHAR1
+    changing
+      value(CH_COMPLETE_DATE) type ANY .
+  class-methods GET_DATATYPE_FIELDS
+    importing
+      value(IM_DATA_TYPE) type ANY
+    changing
+      value(CH_FLD_NAMES) type T_STRING .
+  class-methods DYNAMIC_VALUE_ASSIGN
+    importing
+      !IM_STRUC type ANY
+      !IM_FIELD type STRING
+    changing
+      !CH_OUT_FIELD type ANY .
+  class-methods ADD_2_DYN_CONTAB
+    importing
+      value(IM_TAB_REF) type ANY optional
+      value(IM_SRCH_FIELD) type ANY
+      value(IM_FLTR_VALUE) type ANY
+      value(IM_REL_OPER) type ANY default 'EQ'
+      value(IM_LGCL_EXP) type ANY default 'AND'
+    changing
+      value(CH_COND_PHRASE) type ANY optional
+      value(CH_COND_TAB) type T_STRING optional .
+protected section.
+private section.
+
+  class-methods ADD_2_BDCDATA
+    importing
+      value(IM_1STSCREEN) type ANY default 'X'
+      value(IM_SCREEN) type ANY optional
+      value(IM_PROGRAM) type ANY optional
+      value(IM_FIELD) type ANY optional
+      value(IM_VALUE) type ANY optional
+    changing
+      value(CH_BDC_TAB) type T_BDCDATA optional .
+ENDCLASS.
+
+
+
+CLASS ZCL_ABAP_GEN_UTIL IMPLEMENTATION.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Static Private Method ZCL_ABAP_GEN_UTIL=>ADD_2_BDCDATA
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IM_1STSCREEN                   TYPE        ANY (default ='X')
+* | [--->] IM_SCREEN                      TYPE        ANY(optional)
+* | [--->] IM_PROGRAM                     TYPE        ANY(optional)
+* | [--->] IM_FIELD                       TYPE        ANY(optional)
+* | [--->] IM_VALUE                       TYPE        ANY(optional)
+* | [<-->] CH_BDC_TAB                     TYPE        T_BDCDATA(optional)
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD add_2_bdcdata.
+
+  FIELD-SYMBOLS:
+    <lfs_data> TYPE bdcdata.
+
+  APPEND INITIAL LINE TO ch_bdc_tab ASSIGNING <lfs_data>.
+  <lfs_data>-dynbegin = im_1stscreen.
+  <lfs_data>-dynpro   = im_screen.
+  <lfs_data>-program  = im_program.
+  <lfs_data>-fnam     = im_field.
+  <lfs_data>-fval     = im_value.
+  UNASSIGN <lfs_data>.
+
+ENDMETHOD.                " add_2_bdcdata
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Static Public Method ZCL_ABAP_GEN_UTIL=>ADD_2_DYN_CONTAB
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IM_TAB_REF                     TYPE        ANY(optional)
+* | [--->] IM_SRCH_FIELD                  TYPE        ANY
+* | [--->] IM_FLTR_VALUE                  TYPE        ANY
+* | [--->] IM_REL_OPER                    TYPE        ANY (default ='EQ')
+* | [--->] IM_LGCL_EXP                    TYPE        ANY (default ='AND')
+* | [<-->] CH_COND_PHRASE                 TYPE        ANY(optional)
+* | [<-->] CH_COND_TAB                    TYPE        T_STRING(optional)
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD add_2_dyn_contab.
+
+  DATA:
+    lv_field TYPE fieldname,
+    lv_lines TYPE i.
+
+  FIELD-SYMBOLS:
+    <lfs_str> TYPE string.
+
+  SELECT SINGLE
+         fieldname
+    FROM dd03l
+    INTO lv_field
+   WHERE tabname   EQ im_tab_ref
+     AND fieldname EQ im_srch_field.
+  IF sy-subrc NE 0.
+    RETURN.
+  ENDIF.
+
+  DESCRIBE TABLE ch_cond_tab LINES lv_lines.
+
+  APPEND INITIAL LINE TO ch_cond_tab ASSIGNING <lfs_str>.
+  CONCATENATE im_srch_field
+              im_rel_oper
+              im_fltr_value
+              INTO <lfs_str>
+              SEPARATED BY space.
+
+  IF lv_lines GE 1.
+    CONCATENATE im_lgcl_exp
+                <lfs_str>
+                INTO <lfs_str>
+                SEPARATED BY space.
+  ENDIF.
+
+  UNASSIGN <lfs_str>.
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Static Public Method ZCL_ABAP_GEN_UTIL=>ADD_2_RANGE
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IM_SIGN                        TYPE        ANY (default =ZCL_ABAP_GEN_UTIL=>I)
+* | [--->] IM_OPTION                      TYPE        ANY (default =ZCL_ABAP_GEN_UTIL=>EQ)
+* | [--->] IM_LOW                         TYPE        ANY (default =SPACE)
+* | [--->] IM_HIGH                        TYPE        ANY (default =SPACE)
+* | [<-->] CH_RANGE_TAB                   TYPE        STANDARD TABLE
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD add_2_range.
+
+  FIELD-SYMBOLS:
+    <lfs_rng> TYPE any,
+    <lfs_val> TYPE any.
+
+  APPEND INITIAL LINE TO ch_range_tab ASSIGNING <lfs_rng>.
+  ASSIGN ('<lfs_rng>-sign') TO <lfs_val>.
+  <lfs_val> = im_sign.
+  UNASSIGN <lfs_val>.
+
+  ASSIGN ('<lfs_rng>-option') TO <lfs_val>.
+  <lfs_val> = im_option.
+  UNASSIGN <lfs_val>.
+
+  ASSIGN ('<lfs_rng>-low') TO <lfs_val>.
+  <lfs_val> = im_low.
+  UNASSIGN <lfs_val>.
+
+  ASSIGN ('<lfs_rng>-high') TO <lfs_val>.
+  <lfs_val> = im_high.
+  UNASSIGN <lfs_val>.
+
+  UNASSIGN <lfs_rng>.
+
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Static Public Method ZCL_ABAP_GEN_UTIL=>ADD_BDC_SCREEN
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IM_1STSCREEN                   TYPE        ANY (default ='X')
+* | [--->] IM_SCREEN                      TYPE        ANY
+* | [--->] IM_PROGRAM                     TYPE        ANY
+* | [<-->] CH_BDC_TAB                     TYPE        T_BDCDATA
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD add_bdc_screen.
+
+  add_2_bdcdata(
+    EXPORTING
+      im_1stscreen = im_1stscreen
+      im_screen    = im_screen
+      im_program   = im_program
+    CHANGING
+      ch_bdc_tab = ch_bdc_tab ).
+
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Static Public Method ZCL_ABAP_GEN_UTIL=>ADD_BDC_VALUE
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IM_FIELD                       TYPE        ANY
+* | [--->] IM_VALUE                       TYPE        ANY (default =SPACE)
+* | [<-->] CH_BDC_TAB                     TYPE        T_BDCDATA
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD add_bdc_value.
+
+  add_2_bdcdata(
+    EXPORTING
+      im_field = im_field
+      im_value = im_value
+    CHANGING
+      ch_bdc_tab = ch_bdc_tab ).
+
+ENDMETHOD.                " add_bdc_value
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Static Public Method ZCL_ABAP_GEN_UTIL=>CHANGE_2_USER_DATE_FORMAT
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IM_IN_DATE                     TYPE        ANY (default =SY-DATUM)
+* | [--->] IM_USER                        TYPE        SY-UNAME (default =SY-UNAME)
+* | [<-->] CH_USER_DATE                   TYPE        ANY
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD change_2_user_date_format.
+
+  DATA:
+    lv_date_frmt TYPE xudatfm,
+    lv_dformat   TYPE char10.
+
+  SELECT SINGLE
+         datfm
+    FROM usr01
+    INTO lv_date_frmt
+   WHERE bname EQ im_user.
+  IF sy-subrc EQ 0.
+
+    CASE lv_date_frmt.
+      WHEN '1'. "DD.MM.YYYY
+        comp_date(
+          EXPORTING
+            im_input1    = im_in_date+6(2)
+            im_input2    = im_in_date+4(2)
+            im_input3    = im_in_date(4)
+            im_separator = '.'
+          CHANGING  ch_complete_date = ch_user_date ).
+
+      WHEN '2'. "MM/DD/YYYY
+        comp_date(
+          EXPORTING
+            im_input1    = im_in_date+4(2)
+            im_input2    = im_in_date+6(2)
+            im_input3    = im_in_date(4)
+            im_separator = '/'
+          CHANGING  ch_complete_date = ch_user_date ).
+
+      WHEN '3'. "MM-DD-YYYY
+        comp_date(
+          EXPORTING
+            im_input1    = im_in_date+4(2)
+            im_input2    = im_in_date+6(2)
+            im_input3    = im_in_date(4)
+            im_separator = '-'
+          CHANGING  ch_complete_date = ch_user_date ).
+
+      WHEN '4'. "YYYY.MM.DD
+        comp_date(
+          EXPORTING
+            im_input1    = im_in_date(4)
+            im_input2    = im_in_date+4(2)
+            im_input3    = im_in_date+6(2)
+            im_separator = '.'
+          CHANGING  ch_complete_date = ch_user_date ).
+
+      WHEN '5'. "YYYY/MM/DD
+        comp_date(
+          EXPORTING
+            im_input1    = im_in_date(4)
+            im_input2    = im_in_date+4(2)
+            im_input3    = im_in_date+6(2)
+            im_separator = '/'
+          CHANGING  ch_complete_date = ch_user_date ).
+
+      WHEN '6'. "YYYY-MM-DD
+        comp_date(
+          EXPORTING
+            im_input1    = im_in_date(4)
+            im_input2    = im_in_date+4(2)
+            im_input3    = im_in_date+6(2)
+            im_separator = '-'
+          CHANGING  ch_complete_date = ch_user_date ).
+
+      WHEN '7'. "GYY.MM.DD (Japanese Date)
+        comp_date(
+          EXPORTING
+            im_input1    = im_in_date+2(2)
+            im_input2    = im_in_date+4(2)
+            im_input3    = im_in_date+6(2)
+            im_separator = '.'
+          CHANGING  ch_complete_date = ch_user_date ).
+
+      WHEN '8'. "GYY/MM/DD (Japanese Date)
+        comp_date(
+          EXPORTING
+            im_input1    = im_in_date+2(2)
+            im_input2    = im_in_date+4(2)
+            im_input3    = im_in_date+6(2)
+            im_separator = '/'
+          CHANGING  ch_complete_date = ch_user_date ).
+
+      WHEN '9'. "GYY-MM-DD (Japanese Date)
+        comp_date(
+          EXPORTING
+            im_input1    = im_in_date+2(2)
+            im_input2    = im_in_date+4(2)
+            im_input3    = im_in_date+6(2)
+            im_separator = '-'
+          CHANGING  ch_complete_date = ch_user_date ).
+
+      WHEN 'A'. "YYYY/MM/DD (Islamic Date 1)
+        comp_date(
+          EXPORTING
+            im_input1    = im_in_date(4)
+            im_input2    = im_in_date+4(2)
+            im_input3    = im_in_date+6(2)
+            im_separator = '/'
+          CHANGING  ch_complete_date = ch_user_date ).
+
+      WHEN 'B'. "YYYY/MM/DD (Islamic Date 2)
+        comp_date(
+          EXPORTING
+            im_input1    = im_in_date(4)
+            im_input2    = im_in_date+4(2)
+            im_input3    = im_in_date+6(2)
+            im_separator = '/'
+          CHANGING  ch_complete_date = ch_user_date ).
+
+      WHEN 'C'. "YYYY/MM/DD (Iranian Date)
+        comp_date(
+          EXPORTING
+            im_input1    = im_in_date(4)
+            im_input2    = im_in_date+4(2)
+            im_input3    = im_in_date+6(2)
+            im_separator = '/'
+          CHANGING  ch_complete_date = ch_user_date ).
+
+    ENDCASE.
+  ENDIF.
+
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Static Public Method ZCL_ABAP_GEN_UTIL=>COMP_DATE
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IM_INPUT1                      TYPE        ANY
+* | [--->] IM_INPUT2                      TYPE        ANY
+* | [--->] IM_INPUT3                      TYPE        ANY
+* | [--->] IM_SEPARATOR                   TYPE        CHAR1
+* | [<-->] CH_COMPLETE_DATE               TYPE        ANY
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD comp_date.
+
+  CHECK:
+    im_input1 NA sy-abcde,
+    im_input2 NA sy-abcde,
+    im_input3 NA sy-abcde.
+
+  CONCATENATE im_input1
+              im_input2
+              im_input3
+              INTO ch_complete_date
+              SEPARATED BY im_separator.
+
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Static Public Method ZCL_ABAP_GEN_UTIL=>DYNAMIC_VALUE_ASSIGN
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IM_STRUC                       TYPE        ANY
+* | [--->] IM_FIELD                       TYPE        STRING
+* | [<-->] CH_OUT_FIELD                   TYPE        ANY
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD dynamic_value_assign.
+
+  FIELD-SYMBOLS:
+    <lfs_val> TYPE any.
+
+  ASSIGN COMPONENT im_field OF STRUCTURE im_struc TO <lfs_val>.
+  IF <lfs_val> IS ASSIGNED.
+    ch_out_field = <lfs_val>.
+    UNASSIGN <lfs_val>.
+  ENDIF.
+
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Static Public Method ZCL_ABAP_GEN_UTIL=>GET_DATATYPE_FIELDS
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IM_DATA_TYPE                   TYPE        ANY
+* | [<-->] CH_FLD_NAMES                   TYPE        T_STRING
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD get_datatype_fields.
+
+  DATA:
+    lo_runtime_type  TYPE REF TO cl_abap_typedescr,
+    lo_runtime_struc TYPE REF TO cl_abap_structdescr,
+    lo_runtime_table TYPE REF TO cl_abap_tabledescr.
+
+  FIELD-SYMBOLS:
+    <lfs_comp>  TYPE abap_compdescr,
+    <lfs_name>  TYPE string.
+
+  TRY.
+    lo_runtime_struc ?= cl_abap_typedescr=>describe_by_data(
+                          p_data = im_data_type ).
+
+  CATCH cx_sy_move_cast_error.
+    TRY .
+      lo_runtime_table ?= cl_abap_typedescr=>describe_by_data(
+                            p_data = im_data_type ).
+
+      IF lo_runtime_table IS BOUND.
+        TRY .
+          lo_runtime_struc ?= lo_runtime_table->get_table_line_type( ).
+
+        CATCH cx_sy_move_cast_error.
+          RETURN.
+        ENDTRY.
+
+      ENDIF.
+
+    CATCH cx_sy_move_cast_error.
+      RETURN.
+    ENDTRY.
+
+  ENDTRY.
+
+  CHECK lo_runtime_struc IS BOUND.
+
+  LOOP AT lo_runtime_struc->components ASSIGNING <lfs_comp>.
+    APPEND INITIAL LINE TO ch_fld_names ASSIGNING <lfs_name>.
+    <lfs_name> = <lfs_comp>-name.
+    UNASSIGN <lfs_name>.
+  ENDLOOP.
+  UNASSIGN <lfs_comp>.
+
+ENDMETHOD.
+ENDCLASS.
